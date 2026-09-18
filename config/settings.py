@@ -46,6 +46,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -78,10 +79,16 @@ ASGI_APPLICATION = "config.asgi.application"
 # --- Database ---
 # Prototype default: SQLite. Switch to PostgreSQL + PostGIS for production
 # by setting USE_POSTGRES=True and the DB_* env vars.
-if os.getenv("USE_POSTGRES", "False") == "True":
+import dj_database_url
+
+if os.getenv("DATABASE_URL"):
+    DATABASES = {
+        "default": dj_database_url.config(conn_max_age=600)
+    }
+elif os.getenv("USE_POSTGRES", "False") == "True":
     DATABASES = {
         "default": {
-            "ENGINE": "django.db.backends.postgis",
+            "ENGINE": "django.db.backends.postgresql",
             "NAME": os.getenv("DB_NAME", "ner_logistics"),
             "USER": os.getenv("DB_USER", "postgres"),
             "PASSWORD": os.getenv("DB_PASSWORD", "postgres"),
@@ -96,7 +103,6 @@ else:
             "NAME": BASE_DIR / "db.sqlite3",
         }
     }
-
 AUTH_USER_MODEL = "users.User"
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -113,6 +119,7 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage" 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
